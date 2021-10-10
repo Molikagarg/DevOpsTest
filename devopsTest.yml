@@ -1,0 +1,76 @@
+trigger: 
+  batch: true
+  branches:
+    include:
+      - refs/heads/master
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+variables:
+  workingDirectory: '$(Build.SourcesDirectory)/src'
+
+stages:
+- stage: Build
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master')) //this condition will trigger the build on all 3 projects.
+  jobs:
+  - job: Build & Run tests
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'restore'
+        projects: '**/*.sln'
+        feedsToUse: 'select'
+        vstsFeed: '<your-feed here>'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: '**/*.sln'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: 'src/SimpleApi/SimpleApi.csproj'
+    - task: DotNetCoreCLI@2
+      enabled: true
+      displayName: Run Unit tests
+      continueOnError: false  // Build should not be successful if any test fails.
+      inputs:
+        command: 'test'
+        projects: '**/*Tests/*.csproj'
+        testRunTitle: 'Run Tests'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        targetPath: '**/*.sln'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'publish'
+        publishWebProjects: true
+
+- stage: Dev
+  dependsOn: Build
+  deployment: Dev
+  displayName: Dev
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  pool:
+    vmImage: 'vs2017-win2016'
+  environment: Dev // this environment should be Configured in Azure devops - Environments first and then used here.
+  strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: AzureRmWebAppDeployment@4
+              displayName: 'Azure App Service Deploy'
+              inputs:
+                azureSubscription: '<Azure-service connection here for Azure resource manager>' // this is configured under the service connections section under the Project settings for connection between the azure devops and azure portal for deployment of resources.
+                appName: '<web-app name defined in azure here>'
+                package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+
+- stage: QA
+  dependsOn: Dev
+
+- stage: Prod
+  dependsOn: QA
+
+  
