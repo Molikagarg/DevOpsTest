@@ -47,7 +47,9 @@ steps:
 <5> For each of these QA & Prod environment, configured in the Azure DevOps Environments under Azure Pipelines section, we have set the Approvals under the Approvals section in the environment setting. This will allow the code deployment to the particular stage only after the approvals from the required approvers confgured. 
 
         
+        
 Q2- SCENARIO
+        
 <2> Tools to create and store the terraform templates
         1. Azure subscription.
         2. Choose the desired subscription to store cloud shell resources in and select create storage.
@@ -63,7 +65,8 @@ Q2- SCENARIO
         2. Create the service connection for conncetion between the Azure Devops and Azure portal for resources deployment in cloud.
         3. Develop the separate Deployment pipeline for Azure resource deployment. 
         4. This pipeline will use the Azure Resource deployment task or we can also use the Azure CLI task etc. for deployment of azure resources which will ask for the Azure Subscription (i.e. service connection created above), Template file (path where it is stored), Parameters file etc.
-<4> 
+
+        
 <5> To access the passowrd stored in the Azure Keyvault, 
         secrets can be kept in Azure Pipelines - Library -- refering to azure keyvault -- with access to only admin personel  
         To access the keyvault secrets in Terraform template - use the Azure Keyvault resource -- pointing to the keyvault in azure, refer to the secret in keyvault by using the reference instead of vaule. 
